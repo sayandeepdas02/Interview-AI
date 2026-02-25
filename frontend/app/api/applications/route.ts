@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import connectDB from "@/lib/db"
-import Candidate from "@/models/Candidate"
-import Job from "@/models/Job"
+import { ApplicationService } from "@/services/applicationService"
 
 export async function POST(req: Request) {
     try {
@@ -10,21 +9,14 @@ export async function POST(req: Request) {
 
         await connectDB();
 
-        // Validate job exists
-        const job = await Job.findById(jobId);
-        if (!job) {
-            return new NextResponse("Job not found", { status: 404 })
-        }
-
-        const candidate = await Candidate.create({
-            ...data,
-            jobId,
-            customFields
-        })
+        const candidate = await ApplicationService.createApplication(jobId, data, customFields);
 
         return NextResponse.json(candidate)
-    } catch (error) {
+    } catch (error: any) {
         console.error(error)
+        if (error.message === "Job not found") {
+            return new NextResponse("Job not found", { status: 404 })
+        }
         return new NextResponse("Internal Error", { status: 500 })
     }
 }
