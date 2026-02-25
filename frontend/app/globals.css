@@ -46,25 +46,29 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: #a30000;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.96 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: #a30000;
+  --radius: 0.5rem;
+  /* 8px base */
+  --background: #FAFAFA;
+  --foreground: #111111;
+  --card: #FFFFFF;
+  --card-foreground: #111111;
+  --popover: #FFFFFF;
+  --popover-foreground: #111111;
+  --primary: #CC2929;
+  /* Toned down from #a30000 */
+  --primary-foreground: #FFFFFF;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #374151;
+  --muted: #F3F4F6;
+  --muted-foreground: #888888;
+  --accent: #F9FAFB;
+  --accent-foreground: #111111;
+  --destructive: #EF4444;
+  /* Soft red danger state */
+  --destructive-foreground: #FFFFFF;
+  --border: rgba(0, 0, 0, 0.06);
+  --input: rgba(0, 0, 0, 0.1);
+  --ring: #CC2929;
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -124,6 +128,54 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 500;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  /* Custom Modern Aesthetics */
+  .card,
+  .border-dashed,
+  [role="dialog"],
+  [role="menu"] {
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .dark .card,
+  .dark .border-dashed,
+  .dark [role="dialog"],
+  .dark [role="menu"] {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  button,
+  input,
+  select {
+    border-radius: var(--radius-md);
+  }
+
+  /* Global hover transitions */
+  a,
+  button,
+  [role="button"] {
+    transition: all 150ms ease;
   }
 }

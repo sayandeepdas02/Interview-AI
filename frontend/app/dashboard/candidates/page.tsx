@@ -1,12 +1,17 @@
 import { CandidatesTable } from "@/components/dashboard/candidates-table"
+import { PageContainer } from "@/components/ui/page-container"
+import { SectionHeader } from "@/components/ui/section-header"
 
 export default function CandidatesPage() {
     return (
-        <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Candidates</h2>
+        <PageContainer>
+            <SectionHeader
+                title="Candidates"
+                description="Review applications, filter by status, and export candidate data."
+            />
+            <div className="w-full">
+                <CandidatesTable />
             </div>
-            <CandidatesTable />
-        </div>
+        </PageContainer>
     )
 }
