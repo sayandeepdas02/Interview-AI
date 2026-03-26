@@ -4,34 +4,44 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-// import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group" // If available
 
-export function TestInterface({ jobId, candidateId, duration, onComplete }: any) {
+const API_BASE_URL = "http://localhost:5001/api"
+
+export function TestInterface({ jobId, candidateId: applicationId, duration, onComplete }: any) {
+    const [testId, setTestId] = useState<string | null>(null)
     const [questions, setQuestions] = useState<any[]>([])
     const [currentIndex, setCurrentIndex] = useState(0)
     const [timeLeft, setTimeLeft] = useState(duration * 60)
     const [answers, setAnswers] = useState<Record<string, string>>({})
     const [loaded, setLoaded] = useState(false)
     const [isCompleted, setIsCompleted] = useState(false)
-
     const [tabSwitches, setTabSwitches] = useState(0)
 
     useEffect(() => {
-        // Fetch questions (In real app, fetch one by one or all masked)
         const startTest = async () => {
-            const res = await fetch(`/api/test/${jobId}/start`, {
-                method: "POST",
-                body: JSON.stringify({ candidateId })
-            })
-            const data = await res.json()
-            setQuestions(data.questions)
-            setLoaded(true)
+            try {
+                const res = await fetch(`${API_BASE_URL}/tests/start`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ applicationId })
+                })
+                const result = await res.json()
+                if (result.success && result.data) {
+                    setTestId(result.data._id)
+                    setQuestions(result.data.questions)
+                    setAnswers(result.data.answers || {})
+                }
+            } catch (error) {
+                console.error("Failed to start test", error)
+            } finally {
+                setLoaded(true)
+            }
         }
         startTest()
-    }, [])
+    }, [applicationId])
 
     useEffect(() => {
-        if (!loaded) return
+        if (!loaded || !testId) return
 
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'hidden') {
@@ -50,7 +60,7 @@ export function TestInterface({ jobId, candidateId, duration, onComplete }: any)
             window.removeEventListener('visibilitychange', handleVisibilityChange);
             window.removeEventListener('blur', handleBlur);
         };
-    }, [loaded, tabSwitches]);
+    }, [loaded, testId, tabSwitches]);
 
     const handleTabSwitch = () => {
         const newCount = tabSwitches + 1;
@@ -65,29 +75,30 @@ export function TestInterface({ jobId, candidateId, duration, onComplete }: any)
     };
 
     useEffect(() => {
-        if (!loaded) return
+        if (!loaded || !testId) return
         if (timeLeft <= 0) {
             submitTest()
             return
         }
         const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000)
         return () => clearInterval(timer)
-    }, [timeLeft, loaded])
+    }, [timeLeft, loaded, testId])
 
     const submitAnswer = async (answer: string) => {
         // Optimistic update
-        setAnswers(prev => ({ ...prev, [currentQ.id]: answer }))
+        setAnswers(prev => ({ ...prev, [currentQ.questionId]: answer }))
     }
 
     const nextQuestion = async () => {
-        const currentAnswer = answers[questions[currentIndex].id]
-        if (currentAnswer) {
-            await fetch(`/api/test/${jobId}/submit-answer`, {
-                method: "POST",
+        const currentAnswer = answers[questions[currentIndex].questionId]
+        if (currentAnswer && testId) {
+            await fetch(`${API_BASE_URL}/tests/${testId}/answer`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    candidateId,
-                    questionId: questions[currentIndex].id,
-                    answer: currentAnswer
+                    questionId: questions[currentIndex].questionId,
+                    selectedOption: currentAnswer,
+                    tabSwitched: false
                 })
             })
         }
@@ -106,19 +117,20 @@ export function TestInterface({ jobId, candidateId, duration, onComplete }: any)
     }
 
     const submitTest = async (finalSwitchCount?: number) => {
-        // Final submission
-        const res = await fetch(`/api/test/${jobId}/submit-test`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-                candidateId,
-                tabSwitchCount: finalSwitchCount !== undefined ? finalSwitchCount : tabSwitches
+        if (!testId) return;
+        try {
+            const res = await fetch(`${API_BASE_URL}/tests/${testId}/submit`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tabSwitchCount: finalSwitchCount !== undefined ? finalSwitchCount : tabSwitches })
             })
-        })
-        const result = await res.json()
-        setIsCompleted(true)
+            const result = await res.json()
+            if (result.success) {
+                setIsCompleted(true)
+            }
+        } catch (error) {
+            console.error(error)
+        }
     }
 
     const formatTime = (secs: number) => {
@@ -170,19 +182,19 @@ export function TestInterface({ jobId, candidateId, duration, onComplete }: any)
                 <CardContent className="pt-6 space-y-6">
                     <h3 className="text-lg font-medium">{currentQ.questionText}</h3>
                     <div className="space-y-3">
-                        {["A", "B", "C", "D"].map((opt, i) => {
+                        {currentQ.options.map((opt: string, i: number) => {
                             const optionKey = ["optionA", "optionB", "optionC", "optionD"][i]
-                            const isSelected = answers[currentQ.id] === optionKey
+                            const isSelected = answers[currentQ.questionId] === optionKey
                             return (
                                 <div
-                                    key={opt}
+                                    key={opt + i}
                                     className={`flex items-center p-4 border rounded-lg cursor-pointer transition-all hover:bg-muted font-medium ${isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : ""}`}
                                     onClick={() => submitAnswer(optionKey)}
                                 >
                                     <div className={`h-6 w-6 rounded-full border mr-3 flex items-center justify-center text-xs transition-colors ${isSelected ? "bg-primary border-primary text-primary-foreground" : "border-gray-300 text-gray-500"}`}>
-                                        {opt}
+                                        {["A", "B", "C", "D"][i]}
                                     </div>
-                                    <span className={isSelected ? "text-primary" : "text-gray-700"}>{currentQ[optionKey]}</span>
+                                    <span className={isSelected ? "text-primary" : "text-gray-700"}>{opt}</span>
                                 </div>
                             )
                         })}

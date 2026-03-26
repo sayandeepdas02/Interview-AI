@@ -1,7 +1,18 @@
 "use client"
 
+import { AuthProvider } from "@/lib/context/auth-context"
+import { GoogleOAuthProvider } from "@react-oauth/google"
 import { SessionProvider } from "next-auth/react"
 
 export function Providers({ children }: { children: React.ReactNode }) {
-    return <SessionProvider>{children}</SessionProvider>
+    const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "mock-client-id"
+    return (
+        <GoogleOAuthProvider clientId={clientId}>
+            <AuthProvider>
+                <SessionProvider>
+                    {children}
+                </SessionProvider>
+            </AuthProvider>
+        </GoogleOAuthProvider>
+    )
 }

@@ -16,9 +16,24 @@ export const authOptions: NextAuthOptions = {
             name: "Credentials",
             credentials: {
                 email: { label: "Email", type: "email" },
-                password: { label: "Password", type: "password" }
+                password: { label: "Password", type: "password" },
+                fluxToken: { label: "Token", type: "text" }
             },
             async authorize(credentials) {
+                if (credentials?.fluxToken) {
+                    try {
+                        const res = await fetch("http://localhost:5001/api/auth/me", {
+                            headers: { Authorization: `Bearer ${credentials.fluxToken}` }
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            return { id: data.data.id, name: data.data.name, email: data.data.email };
+                        }
+                    } catch (e) {
+                        return null;
+                    }
+                }
+
                 if (!credentials?.email || !credentials?.password) {
                     return null
                 }

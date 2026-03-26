@@ -3,7 +3,7 @@ import { PlusCircle, Briefcase } from "lucide-react"
 import Link from "next/link"
 import { PageContainer } from "@/components/ui/page-container"
 import { SectionHeader } from "@/components/ui/section-header"
-import { EmptyState } from "@/components/ui/empty-state"
+import { PremiumEmptyState as EmptyState } from "@/components/ui/empty-state"
 
 export default function DashboardPage() {
     return (
@@ -17,13 +17,8 @@ export default function DashboardPage() {
                 icon={<Briefcase className="h-8 w-8 text-primary" />}
                 title="No jobs created"
                 description="You haven't created any roles yet. Start building your automated pipelines by launching a new job description."
-                action={
-                    <Link href="/dashboard/jobs/new">
-                        <Button>
-                            Create Your First Job
-                        </Button>
-                    </Link>
-                }
+                actionLabel="Create Your First Job"
+                onAction={() => window.location.href = "/dashboard/jobs/new"}
             />
         </PageContainer>
     )

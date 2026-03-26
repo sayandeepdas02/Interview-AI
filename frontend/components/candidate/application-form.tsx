@@ -7,6 +7,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent } from "@/components/ui/card"
 
+const API_BASE_URL = "http://localhost:5001/api"
+
 export function ApplicationForm({ job, onSuccess }: { job: any, onSuccess: (id: string) => void }) {
     const { register, handleSubmit, formState: { errors } } = useForm()
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -14,7 +16,6 @@ export function ApplicationForm({ job, onSuccess }: { job: any, onSuccess: (id: 
 
     const onSubmit = async (data: any) => {
         setIsSubmitting(true)
-        console.log("Submitting form...", data)
         try {
             let parsedResume = null;
             if (resumeFile) {
@@ -31,24 +32,39 @@ export function ApplicationForm({ job, onSuccess }: { job: any, onSuccess: (id: 
                 }
             }
 
-            const formData = {
-                ...data,
-                jobId: job.id,
+            const candidateData = {
+                name: data.name,
+                email: data.email,
                 resumeUrl: resumeFile ? URL.createObjectURL(resumeFile) : "https://example.com/resume.pdf", 
-                currentCTC: parseFloat(data.currentCTC),
-                expectedCTC: parseFloat(data.expectedCTC),
-                parsedResume: parsedResume
+                customFields: {} as Record<string, any>
             }
 
-            const res = await fetch("/api/applications", {
+            // Extract custom fields mapping
+            Object.keys(data).forEach(key => {
+                if (key.startsWith("custom_")) {
+                    candidateData.customFields[key.replace("custom_", "")] = data[key];
+                }
+            })
+
+            const payload = {
+                jobId: job.id,
+                candidateData
+            }
+
+            const res = await fetch(`${API_BASE_URL}/applications`, {
                 method: "POST",
-                body: JSON.stringify(formData)
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
             })
 
             if (!res.ok) throw new Error("Submission failed")
 
             const result = await res.json()
-            onSuccess(result.id || result._id)
+            if (result.success && result.data && result.data._id) {
+                onSuccess(result.data._id)
+            } else {
+                throw new Error("Invalid response format")
+            }
         } catch (error) {
             console.error(error)
             alert("Failed to submit application")
@@ -78,21 +94,10 @@ export function ApplicationForm({ job, onSuccess }: { job: any, onSuccess: (id: 
                     </div>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="currentCTC">Current CTC (LPA) *</Label>
-                        <Input id="currentCTC" type="number" step="0.1" {...register("currentCTC", { required: true })} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="expectedCTC">Expected CTC (LPA) *</Label>
-                        <Input id="expectedCTC" type="number" step="0.1" {...register("expectedCTC", { required: true })} />
-                    </div>
-                </div>
-
                 <div className="space-y-2">
                     <Label htmlFor="resume">Resume (PDF) *</Label>
                     <Input id="resume" type="file" accept=".pdf" required onChange={(e) => setResumeFile(e.target.files?.[0] || null)} />
-                    <p className="text-xs text-muted-foreground">Max 5MB</p>
+                    <p className="text-xs text-muted-foreground">Max 5MB (Simulated Upload)</p>
                 </div>
 
                 {job.customFields.map((field: any, i: number) => (
@@ -106,10 +111,6 @@ export function ApplicationForm({ job, onSuccess }: { job: any, onSuccess: (id: 
                     type="submit" 
                     className="w-full" 
                     disabled={isSubmitting}
-                    onClick={() => {
-                        console.log("Button clicked, looking for errors:", Object.keys(errors));
-                        if(Object.keys(errors).length > 0) alert("Validation errors: " + Object.keys(errors).join(', '));
-                    }}
                 >
                     {isSubmitting ? "Submitting..." : job.testEnabled ? "Submit & Start Test" : "Submit Application"}
                 </Button>

@@ -1,34 +1,42 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+import { Sparkles } from "lucide-react";
 
-export interface EmptyStateProps extends React.HTMLAttributes<HTMLDivElement> {
-    icon?: React.ReactNode;
+interface EmptyStateProps {
     title: string;
     description: string;
-    action?: React.ReactNode;
+    actionLabel: string;
+    onAction: () => void;
+    icon?: React.ReactNode;
 }
 
-export function EmptyState({ icon, title, description, action, className, ...props }: EmptyStateProps) {
+export function PremiumEmptyState({
+    title,
+    description,
+    actionLabel,
+    onAction,
+    icon
+}: EmptyStateProps) {
     return (
-        <div
-            className={cn(
-                "flex flex-col items-center justify-center text-center p-8 md:p-12 border bg-card rounded-2xl shadow-sm mx-auto max-w-[500px]",
-                className
-            )}
-            {...props}
-        >
-            {icon && (
-                <div className="flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 text-slate-500 mb-6 border border-slate-100">
-                    {icon}
-                </div>
-            )}
-            <h3 className="text-xl font-semibold tracking-tight text-foreground mb-2">
+        <div className="w-full rounded-[16px] border border-dashed border-edge bg-muted/20 flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="w-16 h-16 rounded-[16px] bg-gradient-to-br from-brand-orange/20 to-brand-red/10 flex items-center justify-center mb-6 shadow-sm">
+                {icon ? icon : <Sparkles className="w-8 h-8 text-brand-orange" />}
+            </div>
+            
+            <h3 className="text-xl font-heading font-semibold text-foreground mb-2">
                 {title}
             </h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm mx-auto">
+            
+            <p className="text-[14px] text-muted-foreground max-w-[400px] mb-8 leading-relaxed">
                 {description}
             </p>
-            {action && <div>{action}</div>}
+
+            <button 
+                onClick={onAction}
+                className="group relative overflow-hidden bg-foreground text-background font-medium text-[13px] px-6 py-2.5 rounded-[10px] shadow-sm hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
+            >
+                {/* Subtle gradient glow inside button */}
+                <div className="absolute inset-0 bg-gradient-to-r from-brand-orange/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <span className="relative z-10">{actionLabel}</span>
+            </button>
         </div>
-    )
+    );
 }

@@ -98,9 +98,9 @@ export function CandidatesTable() {
 
     const getStatusVariant = (status: string) => {
         switch (status) {
-            case "SHORTLISTED": return "success";
+            case "SHORTLISTED": return "default";
             case "REJECTED": return "destructive";
-            case "INTERVIEWED": return "info";
+            case "INTERVIEWED": return "neutral";
             default: return "secondary"; // APPLIED
         }
     }
